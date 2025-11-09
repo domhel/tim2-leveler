@@ -1,9 +1,10 @@
 import struct
 import math
 import argparse
+import json
+from pathlib import Path
 from enum import IntEnum, IntFlag
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
 
 
 class PartType(IntEnum):
@@ -109,6 +110,13 @@ class Flags3(IntFlag):
     SCENERY_PART = 0x1000
     WALL_PART = 0x2000
     SHOW_SOLUTION_ICON = 0x8000
+
+
+def get_default_part_size(part_type: PartType) -> tuple[int, int, int, int]:
+    """Get default size for a part type (width_1, height_1, width_2, height_2)"""
+    # Most parts are 32x32 by default
+    # Add specific sizes here as they are discovered
+    return (0x20, 0x20, 0x20, 0x20)
 
 
 @dataclass
@@ -552,6 +560,577 @@ def make_buffer(color: int, music: int, quiz_title: bytes, goal_description: byt
     return buffer
     
 
+def flags1_to_list(flags: int) -> list[str]:
+    """Convert Flags1 to list of flag names"""
+    result = []
+    if flags & Flags1.UNKNOWN_0x40:
+        result.append("UNKNOWN_0x40")
+    if flags & Flags1.CAN_FLIP_VERTICAL:
+        result.append("CAN_FLIP_VERTICAL")
+    if flags & Flags1.CAN_FLIP_HORIZONTAL:
+        result.append("CAN_FLIP_HORIZONTAL")
+    if flags & Flags1.MOVING_PART:
+        result.append("MOVING_PART")
+    if flags & Flags1.FIXED_PART_1:
+        result.append("FIXED_PART_1")
+    if flags & Flags1.FIXED_PART_2:
+        result.append("FIXED_PART_2")
+    return result
+
+def flags2_to_list(flags: int) -> list[str]:
+    """Convert Flags2 to list of flag names"""
+    result = []
+    if flags & Flags2.BELT_CAN_CONNECT:
+        result.append("BELT_CAN_CONNECT")
+    if flags & Flags2.BELT_IS_CONNECTED:
+        result.append("BELT_IS_CONNECTED")
+    if flags & Flags2.ROPE_CAN_CONNECT:
+        result.append("ROPE_CAN_CONNECT")
+    if flags & Flags2.ROPE_CAN_CONNECT_2:
+        result.append("ROPE_CAN_CONNECT_2")
+    if flags & Flags2.SPRITE_FLIP_HORIZONTAL:
+        result.append("SPRITE_FLIP_HORIZONTAL")
+    if flags & Flags2.SPRITE_FLIP_VERTICAL:
+        result.append("SPRITE_FLIP_VERTICAL")
+    if flags & Flags2.PROBABLY_UNUSED:
+        result.append("PROBABLY_UNUSED")
+    if flags & Flags2.CAN_STRETCH_ONE_DIR:
+        result.append("CAN_STRETCH_ONE_DIR")
+    if flags & Flags2.CAN_STRETCH_BOTH:
+        result.append("CAN_STRETCH_BOTH")
+    return result
+
+def flags3_to_list(flags: int) -> list[str]:
+    """Convert Flags3 to list of flag names"""
+    result = []
+    if flags & Flags3.CAN_PLUG_OUTLET:
+        result.append("CAN_PLUG_OUTLET")
+    if flags & Flags3.IS_ELECTRIC_OUTLET:
+        result.append("IS_ELECTRIC_OUTLET")
+    if flags & Flags3.CAN_BURN_OR_FUSE:
+        result.append("CAN_BURN_OR_FUSE")
+    if flags & Flags3.UNKNOWN_0x8:
+        result.append("UNKNOWN_0x8")
+    if flags & Flags3.LOCKED:
+        result.append("LOCKED")
+    if flags & Flags3.SIZABLE_SCENERY:
+        result.append("SIZABLE_SCENERY")
+    if flags & Flags3.UNKNOWN_0x100:
+        result.append("UNKNOWN_0x100")
+    if flags & Flags3.SHOW_PROGRAM_ICON:
+        result.append("SHOW_PROGRAM_ICON")
+    if flags & Flags3.SCENERY_PART:
+        result.append("SCENERY_PART")
+    if flags & Flags3.WALL_PART:
+        result.append("WALL_PART")
+    if flags & Flags3.SHOW_SOLUTION_ICON:
+        result.append("SHOW_SOLUTION_ICON")
+    return result
+
+def list_to_flags1(flags_list: list[str]) -> int:
+    """Convert list of flag names to Flags1 value"""
+    flags = 0
+    for flag_name in flags_list:
+        if hasattr(Flags1, flag_name):
+            flags |= getattr(Flags1, flag_name)
+    return flags
+
+def list_to_flags2(flags_list: list[str]) -> int:
+    """Convert list of flag names to Flags2 value"""
+    flags = 0
+    for flag_name in flags_list:
+        if hasattr(Flags2, flag_name):
+            flags |= getattr(Flags2, flag_name)
+    return flags
+
+def list_to_flags3(flags_list: list[str]) -> int:
+    """Convert list of flag names to Flags3 value"""
+    flags = 0
+    for flag_name in flags_list:
+        if hasattr(Flags3, flag_name):
+            flags |= getattr(Flags3, flag_name)
+    return flags
+
+def part_to_dict(part: Part) -> dict:
+    """Convert a Part object to a JSON-serializable dictionary"""
+    result = {
+        "part_type": part.part_type.name,
+        "flags_1": flags1_to_list(part.flags_1),
+        "flags_2": flags2_to_list(part.flags_2),
+        "flags_3": flags3_to_list(part.flags_3),
+        "position": {"x": part.pos_x, "y": part.pos_y}
+    }
+    
+    # Only include size if it differs from default
+    default_w1, default_h1, default_w2, default_h2 = get_default_part_size(part.part_type)
+    if (part.width_1 != default_w1 or part.height_1 != default_h1 or 
+        part.width_2 != default_w2 or part.height_2 != default_h2):
+        result["size"] = {
+            "width_1": part.width_1,
+            "height_1": part.height_1,
+            "width_2": part.width_2,
+            "height_2": part.height_2
+        }
+    
+    # Add optional fields only if non-default (skip unknown_* fields that are 0)
+    if part.appearance != 0:
+        result["appearance"] = part.appearance
+    if part.behavior != 0:
+        result["behavior"] = part.behavior
+    
+    # Belt connections
+    if part.belt_connect_pos_x != 0 or part.belt_connect_pos_y != 0 or part.belt_line_distance != 0:
+        result["belt_connection"] = {
+            "x": part.belt_connect_pos_x,
+            "y": part.belt_connect_pos_y,
+            "distance": part.belt_line_distance
+        }
+    
+    # Rope connections
+    if part.rope_1_connect_pos_x != 0 or part.rope_1_connect_pos_y != 0:
+        result["rope_1_connection"] = {
+            "x": part.rope_1_connect_pos_x,
+            "y": part.rope_1_connect_pos_y
+        }
+    if part.rope_2_connect_pos_x != 0 or part.rope_2_connect_pos_y != 0:
+        result["rope_2_connection"] = {
+            "x": part.rope_2_connect_pos_x,
+            "y": part.rope_2_connect_pos_y
+        }
+    
+    # Connected parts
+    if part.connected_1 != -1:
+        result["connected_1"] = part.connected_1
+    if part.connected_2 != -1:
+        result["connected_2"] = part.connected_2
+    if part.outlet_plugged_1 != -1:
+        result["outlet_plugged_1"] = part.outlet_plugged_1
+    if part.outlet_plugged_2 != -1:
+        result["outlet_plugged_2"] = part.outlet_plugged_2
+    
+    # Type-specific fields
+    if isinstance(part, Belt):
+        belt_data = {}
+        if part.unknown_28 != 0:
+            belt_data["unknown_28"] = part.unknown_28
+        if part.unknown_30 != 0:
+            belt_data["unknown_30"] = part.unknown_30
+        if part.belt_connected_part_1 != -1:
+            belt_data["connected_part_1"] = part.belt_connected_part_1
+        if part.belt_connected_part_2 != -1:
+            belt_data["connected_part_2"] = part.belt_connected_part_2
+        if part.unknown_36_belt != 0:
+            belt_data["unknown_36"] = part.unknown_36_belt
+        if part.unknown_38 != 0:
+            belt_data["unknown_38"] = part.unknown_38
+        if part.unknown_40 != 0:
+            belt_data["unknown_40"] = part.unknown_40
+        if part.unknown_42 != 0:
+            belt_data["unknown_42"] = part.unknown_42
+        if belt_data:  # Only add if there's data
+            result["belt_data"] = belt_data
+    elif isinstance(part, Rope):
+        rope_data = {}
+        if part.rope_segment_length != 0:
+            rope_data["segment_length"] = part.rope_segment_length
+        if part.unknown_28 != 0:
+            rope_data["unknown_28"] = part.unknown_28
+        if part.unknown_30 != 0:
+            rope_data["unknown_30"] = part.unknown_30
+        if part.unknown_32_rope != 1:  # Default is 1, not 0
+            rope_data["unknown_32"] = part.unknown_32_rope
+        if part.rope_connected_part_1 != -1:
+            rope_data["connected_part_1"] = part.rope_connected_part_1
+        if part.rope_connected_part_2 != -1:
+            rope_data["connected_part_2"] = part.rope_connected_part_2
+        if part.part_1_connect_field_usage != 0:
+            rope_data["part_1_connect_field_usage"] = part.part_1_connect_field_usage
+        if part.part_2_connect_field_usage != 0:
+            rope_data["part_2_connect_field_usage"] = part.part_2_connect_field_usage
+        if part.unknown_44 != 0:
+            rope_data["unknown_44"] = part.unknown_44
+        if part.unknown_46 != 0:
+            rope_data["unknown_46"] = part.unknown_46
+        if rope_data:  # Only add if there's data
+            result["rope_data"] = rope_data
+    elif isinstance(part, Pulley):
+        pulley_data: dict[str, object] = {}
+        if part.unknown_28 != 0:
+            pulley_data["unknown_28"] = part.unknown_28
+        if part.unknown_30 != 0:
+            pulley_data["unknown_30"] = part.unknown_30
+        if part.unknown_32_pulley != 1:  # Default is 1, not 0
+            pulley_data["unknown_32"] = part.unknown_32_pulley
+        if (part.pulley_rope_1_connect_pos_x != 0 or part.pulley_rope_1_connect_pos_y != 0):
+            pulley_data["rope_1_connection"] = {
+                "x": part.pulley_rope_1_connect_pos_x,
+                "y": part.pulley_rope_1_connect_pos_y
+            }
+        if (part.pulley_rope_2_connect_pos_x != 0 or part.pulley_rope_2_connect_pos_y != 0):
+            pulley_data["rope_2_connection"] = {
+                "x": part.pulley_rope_2_connect_pos_x,
+                "y": part.pulley_rope_2_connect_pos_y
+            }
+        if part.unknown_36_pulley != -1:  # Default is -1
+            pulley_data["unknown_36"] = part.unknown_36_pulley
+        if part.unknown_38 != -1:  # Default is -1
+            pulley_data["unknown_38"] = part.unknown_38
+        if part.unknown_40 != 0:
+            pulley_data["unknown_40"] = part.unknown_40
+        if part.unknown_42 != 0:
+            pulley_data["unknown_42"] = part.unknown_42
+        if part.pulley_connected_1 != -1:
+            pulley_data["connected_1"] = part.pulley_connected_1
+        if part.pulley_connected_2 != -1:
+            pulley_data["connected_2"] = part.pulley_connected_2
+        if part.unknown_50 != -1:  # Default is -1
+            pulley_data["unknown_50"] = part.unknown_50
+        if part.unknown_52 != -1:  # Default is -1
+            pulley_data["unknown_52"] = part.unknown_52
+        if part.rope_index != -1:
+            pulley_data["rope_index"] = part.rope_index
+        if pulley_data:  # Only add if there's data
+            result["pulley_data"] = pulley_data
+    elif isinstance(part, ProgrammableBall):
+        result["programmable_ball_data"] = {
+            "density": part.density,
+            "elasticity": part.elasticity,
+            "friction": part.friction,
+            "gravity_buoyancy": part.gravity_buoyancy,
+            "mass": part.mass,
+            "appearance_2": part.appearance_2
+        }
+    
+    return result
+
+def dict_to_part(part_dict: dict) -> Part:
+    """Convert a dictionary to a Part object"""
+    # Get part type
+    part_type = PartType[part_dict["part_type"]]
+    
+    # Convert flags
+    flags_1 = list_to_flags1(part_dict.get("flags_1", []))
+    flags_2 = list_to_flags2(part_dict.get("flags_2", []))
+    flags_3 = list_to_flags3(part_dict.get("flags_3", []))
+    
+    # Basic fields
+    pos = part_dict.get("position", {"x": 0, "y": 0})
+    
+    # Get size from JSON or use defaults for this part type
+    if "size" in part_dict:
+        size = part_dict["size"]
+        width_1 = size["width_1"]
+        height_1 = size["height_1"]
+        width_2 = size["width_2"]
+        height_2 = size["height_2"]
+    else:
+        width_1, height_1, width_2, height_2 = get_default_part_size(part_type)
+    
+    # Create base kwargs
+    kwargs = {
+        "part_type": part_type,
+        "flags_1": flags_1,
+        "flags_2": flags_2,
+        "flags_3": flags_3,
+        "pos_x": pos["x"],
+        "pos_y": pos["y"],
+        "width_1": width_1,
+        "height_1": height_1,
+        "width_2": width_2,
+        "height_2": height_2,
+        "appearance": part_dict.get("appearance", 0),
+        "behavior": part_dict.get("behavior", 0),
+        "unknown_10": 0,  # Always 0, not in JSON
+        "unknown_26": 0,  # Always 0, not in JSON
+        "unknown_32": 0,  # Always 0, not in JSON
+        "unknown_36": 0   # Always 0, not in JSON
+    }
+    
+    # Belt connection
+    if "belt_connection" in part_dict:
+        bc = part_dict["belt_connection"]
+        kwargs["belt_connect_pos_x"] = bc["x"]
+        kwargs["belt_connect_pos_y"] = bc["y"]
+        kwargs["belt_line_distance"] = bc["distance"]
+    
+    # Rope connections
+    if "rope_1_connection" in part_dict:
+        rc = part_dict["rope_1_connection"]
+        kwargs["rope_1_connect_pos_x"] = rc["x"]
+        kwargs["rope_1_connect_pos_y"] = rc["y"]
+    if "rope_2_connection" in part_dict:
+        rc = part_dict["rope_2_connection"]
+        kwargs["rope_2_connect_pos_x"] = rc["x"]
+        kwargs["rope_2_connect_pos_y"] = rc["y"]
+    
+    # Connected parts
+    kwargs["connected_1"] = part_dict.get("connected_1", -1)
+    kwargs["connected_2"] = part_dict.get("connected_2", -1)
+    kwargs["outlet_plugged_1"] = part_dict.get("outlet_plugged_1", -1)
+    kwargs["outlet_plugged_2"] = part_dict.get("outlet_plugged_2", -1)
+    
+    # Create appropriate part type
+    if "belt_data" in part_dict:
+        bd = part_dict["belt_data"]
+        kwargs.update({
+            "unknown_28": bd.get("unknown_28", 0),
+            "unknown_30": bd.get("unknown_30", 0),
+            "belt_connected_part_1": bd.get("connected_part_1", -1),
+            "belt_connected_part_2": bd.get("connected_part_2", -1),
+            "unknown_36_belt": bd.get("unknown_36", 0),
+            "unknown_38": bd.get("unknown_38", 0),
+            "unknown_40": bd.get("unknown_40", 0),
+            "unknown_42": bd.get("unknown_42", 0)
+        })
+        return Belt(**kwargs)
+    elif "rope_data" in part_dict:
+        rd = part_dict["rope_data"]
+        kwargs.update({
+            "rope_segment_length": rd.get("segment_length", 0),
+            "unknown_28": rd.get("unknown_28", 0),
+            "unknown_30": rd.get("unknown_30", 0),
+            "unknown_32_rope": rd.get("unknown_32", 1),
+            "rope_connected_part_1": rd.get("connected_part_1", -1),
+            "rope_connected_part_2": rd.get("connected_part_2", -1),
+            "part_1_connect_field_usage": rd.get("part_1_connect_field_usage", 0),
+            "part_2_connect_field_usage": rd.get("part_2_connect_field_usage", 0),
+            "unknown_44": rd.get("unknown_44", 0),
+            "unknown_46": rd.get("unknown_46", 0)
+        })
+        return Rope(**kwargs)
+    elif "pulley_data" in part_dict:
+        pd = part_dict["pulley_data"]
+        kwargs.update({
+            "unknown_28": pd.get("unknown_28", 0),
+            "unknown_30": pd.get("unknown_30", 0),
+            "unknown_32_pulley": pd.get("unknown_32", 1),
+            "pulley_rope_1_connect_pos_x": pd["rope_1_connection"]["x"],
+            "pulley_rope_1_connect_pos_y": pd["rope_1_connection"]["y"],
+            "pulley_rope_2_connect_pos_x": pd["rope_2_connection"]["x"],
+            "pulley_rope_2_connect_pos_y": pd["rope_2_connection"]["y"],
+            "unknown_36_pulley": pd.get("unknown_36", -1),
+            "unknown_38": pd.get("unknown_38", -1),
+            "unknown_40": pd.get("unknown_40", 0),
+            "unknown_42": pd.get("unknown_42", 0),
+            "pulley_connected_1": pd.get("connected_1", -1),
+            "pulley_connected_2": pd.get("connected_2", -1),
+            "unknown_50": pd.get("unknown_50", -1),
+            "unknown_52": pd.get("unknown_52", -1),
+            "rope_index": pd.get("rope_index", -1)
+        })
+        return Pulley(**kwargs)
+    elif "programmable_ball_data" in part_dict:
+        pbd = part_dict["programmable_ball_data"]
+        kwargs.update({
+            "density": pbd.get("density", 2832),
+            "elasticity": pbd.get("elasticity", 128),
+            "friction": pbd.get("friction", 16),
+            "gravity_buoyancy": pbd.get("gravity_buoyancy", 269),
+            "mass": pbd.get("mass", 200),
+            "appearance_2": pbd.get("appearance_2", 0)
+        })
+        return ProgrammableBall(**kwargs)
+    else:
+        return Part(**kwargs)
+
+def tim_to_json(tim_filepath: str) -> dict:
+    """Parse a TIM file and convert to JSON-serializable dictionary"""
+    with open(tim_filepath, 'rb') as f:
+        data = f.read()
+    
+    offset = 0
+    
+    # Magic number
+    _magic = struct.unpack_from('>I', data, offset)[0]
+    offset += 4
+    
+    # Background
+    bg_unknown, bg_color = struct.unpack_from('>BB', data, offset)
+    offset += 2
+    
+    # Quiz title (null-terminated string)
+    title_start = offset
+    while data[offset] != 0:
+        offset += 1
+    offset += 1
+    quiz_title = data[title_start:offset-1].decode('latin-1')
+    
+    # Goal description (null-terminated string)
+    desc_start = offset
+    while data[offset] != 0:
+        offset += 1
+    offset += 1
+    goal_description = data[desc_start:offset-1].decode('latin-1')
+    
+    # Hints
+    num_hints = struct.unpack_from('<H', data, offset)[0]
+    offset += 2
+    offset += 7 * 8  # Skip hint data
+    
+    # Global puzzle information
+    pressure, gravity, unk4, unk6, music, num_fixed, num_moving, unk14 = struct.unpack_from('<hhHHHHHH', data, offset)
+    offset += 16
+    
+    # Parse normal parts
+    normal_parts = []
+    for _ in range(num_moving):
+        part = Part.from_bytes(data, offset)
+        offset += 48
+        normal_parts.append(part_to_dict(part))
+    
+    # Solution information
+    _num_conditions = struct.unpack_from('<H', data, offset)[0]
+    offset += 2
+    
+    solution_conditions = []
+    for _ in range(8):
+        cond_data = struct.unpack_from('<hHHHhhhh', data, offset)
+        offset += 16
+        part_idx, state1, state2, count, rect_x, rect_y, rect_w, rect_h = cond_data
+        if part_idx != -1 or state1 != 0 or state2 != 0 or count != 0:
+            solution_conditions.append({
+                "part_index": part_idx,
+                "state_1": state1,
+                "state_2": state2,
+                "count": count,
+                "rectangle": {
+                    "x": rect_x,
+                    "y": rect_y,
+                    "width": rect_w,
+                    "height": rect_h
+                }
+            })
+    
+    delay = struct.unpack_from('<H', data, offset)[0]
+    
+    # Build JSON structure
+    result: dict[str,object] = {
+        "version": "TIM2",
+        "title": quiz_title,
+        "description": goal_description
+    }
+    
+    # Only include background.unknown if it's not 0
+    bg_data = {"color": bg_color}
+    if bg_unknown != 0:
+        bg_data["unknown"] = bg_unknown
+    result["background"] = bg_data
+    
+    # Build global_settings, excluding zero unknowns
+    global_settings = {
+        "pressure": pressure,
+        "gravity": gravity,
+        "music": music
+    }
+    if unk4 != 0:
+        global_settings["unknown_4"] = unk4
+    if unk6 != 0:
+        global_settings["unknown_6"] = unk6
+    if unk14 != 0:
+        global_settings["unknown_14"] = unk14
+    result["global_settings"] = global_settings
+    
+    # Only include hints if there are any
+    if num_hints > 0:
+        result["hints"] = {"count": num_hints}
+    
+    result["parts"] = normal_parts
+    
+    # Solution
+    solution_data = {}
+    if solution_conditions:
+        solution_data["conditions"] = solution_conditions
+    if delay != 0:
+        solution_data["delay"] = delay
+    if solution_data:
+        result["solution"] = solution_data
+    
+    return result
+
+def json_to_tim(json_data: dict) -> bytes:
+    """Convert a JSON dictionary to TIM file bytes"""
+    # Extract data
+    title = json_data["title"].encode('latin-1') + b'\0'
+    description = json_data["description"].encode('latin-1') + b'\0'
+    bg = json_data["background"]
+    settings = json_data["global_settings"]
+    parts_data = json_data["parts"]
+    solution = json_data.get("solution", {})
+    
+    # Convert parts
+    parts = [dict_to_part(p) for p in parts_data]
+    
+    # Count part types
+    num_normal = len([p for p in parts if isinstance(p, Part) and not isinstance(p, (Belt, Rope, Pulley, ProgrammableBall))])
+    num_belts = len([p for p in parts if isinstance(p, Belt)])
+    num_ropes = len([p for p in parts if isinstance(p, Rope)])
+    num_pulleys = len([p for p in parts if isinstance(p, Pulley)])
+    num_programmable = len([p for p in parts if isinstance(p, ProgrammableBall)])
+    
+    # Calculate file size
+    filesize = calculate_filesize(len(title), len(description), num_normal, num_belts, num_ropes, num_pulleys, num_programmable)
+    buffer = bytearray(filesize)
+    offset = 0
+    
+    # Magic number
+    struct.pack_into('>I', buffer, offset, 0xEFAC1301)
+    offset += 4
+    
+    # Background (unknown defaults to 0 if not present)
+    struct.pack_into('>BB', buffer, offset, bg.get("unknown", 0), bg["color"])
+    offset += 2
+    
+    # Title and description
+    struct.pack_into(f'<{len(title)}s', buffer, offset, title)
+    offset += len(title)
+    struct.pack_into(f'<{len(description)}s', buffer, offset, description)
+    offset += len(description)
+    
+    # Hints (empty for now)
+    hints_count = json_data.get("hints", {}).get("count", 0)
+    struct.pack_into('<H', buffer, offset, hints_count)
+    offset += 2
+    offset += 7 * 8  # Skip hint data
+    
+    # Global settings
+    num_fixed = num_belts + num_ropes + num_pulleys
+    num_moving = len(parts) - num_fixed
+    struct.pack_into('<hhHHHHHH', buffer, offset,
+                     settings["pressure"], settings["gravity"],
+                     settings.get("unknown_4", 0), settings.get("unknown_6", 0),
+                     settings["music"], num_fixed, num_moving,
+                     settings.get("unknown_14", 0))
+    offset += 16
+    
+    # Write parts
+    for part in parts:
+        part_bytes = part.to_bytes()
+        buffer[offset:offset+len(part_bytes)] = part_bytes
+        offset += len(part_bytes)
+    
+    # Solution information
+    conditions = solution.get("conditions", [])
+    struct.pack_into('<H', buffer, offset, len(conditions))
+    offset += 2
+    
+    # Write up to 8 conditions
+    for i in range(8):
+        if i < len(conditions):
+            cond = conditions[i]
+            rect = cond["rectangle"]
+            struct.pack_into('<hHHHhhhh', buffer, offset,
+                           cond["part_index"], cond["state_1"], cond["state_2"],
+                           cond["count"], rect["x"], rect["y"],
+                           rect["width"], rect["height"])
+        else:
+            struct.pack_into('<hHHHhhhh', buffer, offset, -1, 0, 0, 0, 0, 0, 0, 0)
+        offset += 16
+    
+    struct.pack_into('<H', buffer, offset, solution.get("delay", 0))
+    offset += 2
+    
+    return bytes(buffer)
+
 def parse_tim_file(filepath: str):
     '''Parse a TIM file and print all information to console'''
     with open(filepath, 'rb') as f:
@@ -598,7 +1177,7 @@ def parse_tim_file(filepath: str):
     pressure, gravity, unk4, unk6, music, num_fixed, num_moving, unk14 = struct.unpack_from('<hhHHHHHH', data, offset)
     offset += 16
     print(f"\n{'='*60}")
-    print(f"Global Puzzle Information:")
+    print("Global Puzzle Information:")
     print(f"{'='*60}")
     print(f"  Pressure: {pressure}")
     print(f"  Gravity: {gravity}")
@@ -727,26 +1306,26 @@ def parse_tim_file(filepath: str):
     # Parse belts
     if num_fixed > 0:
         print(f"\n{'='*60}")
-        print(f"Belts:")
+        print("Belts:")
         print(f"{'='*60}")
         # Belts would be 52 bytes each - need to determine how many
         # For now, we'll try to detect them based on part type
     
     # Parse ropes
     print(f"\n{'='*60}")
-    print(f"Ropes:")
+    print("Ropes:")
     print(f"{'='*60}")
     print("  (Not yet in generated files)")
     
     # Parse pulleys
     print(f"\n{'='*60}")
-    print(f"Pulleys:")
+    print("Pulleys:")
     print(f"{'='*60}")
     print("  (Not yet in generated files)")
     
     # Solution information (132 bytes)
     print(f"\n{'='*60}")
-    print(f"Solution Information:")
+    print("Solution Information:")
     print(f"{'='*60}")
     num_conditions = struct.unpack_from('<H', data, offset)[0]
     offset += 2
@@ -768,7 +1347,7 @@ def parse_tim_file(filepath: str):
     print(f"\nDelay: {delay}")
     
     print(f"\n{'='*60}")
-    print(f"File Statistics:")
+    print("File Statistics:")
     print(f"{'='*60}")
     print(f"Total file size: {len(data)} bytes")
     print(f"Bytes parsed: {offset}")
@@ -794,8 +1373,44 @@ def main():
                         help='Music from 1000 to 1023')
     parser.add_argument('--parse', type=str, metavar='FILE',
                         help='Parse and display information from a TIM file')
+    parser.add_argument('--tim2json', type=str, metavar='FILE',
+                        help='Convert a TIM file to JSON format')
+    parser.add_argument('--json2tim', type=str, metavar='FILE',
+                        help='Convert a JSON file to TIM format')
     
     args = parser.parse_args()
+    
+    # If tim2json mode, convert TIM to JSON and exit
+    if args.tim2json:
+        input_path = Path(args.tim2json)
+        output_path = input_path.with_suffix('.json')
+        
+        print(f"Converting {input_path} to JSON...")
+        json_data = tim_to_json(str(input_path))
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, indent=2, ensure_ascii=False)
+        
+        print(f"Saved to {output_path}")
+        return
+    
+    # If json2tim mode, convert JSON to TIM and exit
+    if args.json2tim:
+        input_path = Path(args.json2tim)
+        output_path = input_path.with_suffix('.TIM')
+        
+        print(f"Converting {input_path} to TIM...")
+        
+        with open(input_path, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+        
+        tim_bytes = json_to_tim(json_data)
+        
+        with open(output_path, 'wb') as f:
+            f.write(tim_bytes)
+        
+        print(f"Saved {len(tim_bytes)} bytes to {output_path}")
+        return
     
     # If parse mode, parse the file and exit
     if args.parse:
