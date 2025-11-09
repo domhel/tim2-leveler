@@ -1,5 +1,6 @@
 import struct
 import math
+import argparse
 
 def insert_bowlingball(buffer, offset, x, y) -> int:
     assert 0 <= x <= 560
@@ -62,8 +63,9 @@ def calculate_num_parts(normal_parts: list, belts: list, ropes: list, pulleys: l
     num_moving_parts = len(normal_parts)
     return num_fixed_parts, num_moving_parts
     
-def make_buffer(color: int, quiz_title: bytes, goal_description: bytes, normal_parts: list, belts: list, ropes: list, pulleys: list) -> bytearray:
+def make_buffer(color: int, music: int, quiz_title: bytes, goal_description: bytes, normal_parts: list, belts: list, ropes: list, pulleys: list) -> bytearray:
     assert 0 <= color <= 16
+    assert 1000 <= music <= 1023
 
     quiz_title_len=len(quiz_title)
     goal_description_len=len(goal_description)
@@ -96,7 +98,7 @@ def make_buffer(color: int, quiz_title: bytes, goal_description: bytes, normal_p
     pressure_i16 = 67
     gravity_i16 = 272
     unknown_4_u16 = unknown_6_u16 = 0
-    music_u16 = 1000 #1000-1023
+    music_u16 = music #1000-1023
     num_parts_fixed_u16 = num_fixed_parts
     num_parts_moving_u16 = num_moving_parts
     unknown_14_u16 = 0
@@ -141,13 +143,34 @@ def make_buffer(color: int, quiz_title: bytes, goal_description: bytes, normal_p
     
 
 def main():
-    quiz_title=b'BOWLING_BALL\0'
-    goal_description=b'\0'
+    parser = argparse.ArgumentParser(description='Generate TIM2 level files')
+    parser.add_argument('--title', type=str, default='My spiral test', 
+                        help='Quiz title for the level')
+    parser.add_argument('--description', type=str, default='Press start and it will lag like hell!',
+                        help='Goal description for the level')
+    parser.add_argument('--output', type=str, default='SPIRAL.TIM',
+                        help='Output file path (relative or absolute)')
+    parser.add_argument('--debug', action='store_true',
+                        help='Enable debug output (print buffer hex)')
+    parser.add_argument('--color', type=int, default=3,
+                        help='Background color from 0 to 16')
+    parser.add_argument('--music', type=int, default=1000,
+                        help='Music from 1000 to 1023')
+    
+    args = parser.parse_args()
+    
+    # Ensure strings are null-terminated and encoded as bytes
+    quiz_title = args.title.encode('latin-1') + b'\0'
+    goal_description = args.description.encode('latin-1') + b'\0'
+    
+    color = args.color
+    music = args.music
 
     num_basketballs = 150
 
     buffer = make_buffer(
-        color=3,
+        color=color,
+        music=music,
         quiz_title=quiz_title,
         goal_description=goal_description,
         normal_parts=[i for i in range(num_basketballs)],
@@ -156,11 +179,13 @@ def main():
         pulleys=[],
     )
 
-    print(buffer.hex(' ', bytes_per_sep=2))
+    if args.debug:
+        print(buffer.hex(' ', bytes_per_sep=2))
 
-    filename = 'GENERATED0001.TIM'
+    filename = args.output
     with open(filename, 'wb') as file:
         file.write(buffer)
+        print(f'Saved {len(buffer)} bytes into {filename}')
 
     #Readback to be sure
     with open(filename, 'rb') as file:
