@@ -569,7 +569,7 @@ def parse_tim_file(filepath: str):
     # Background
     bg_unknown, bg_color = struct.unpack_from('>BB', data, offset)
     offset += 2
-    print(f"Background Color: {bg_color}")
+    print(f"Background: unknown={bg_unknown}, color={bg_color}")
     
     # Quiz title (null-terminated string)
     title_start = offset
@@ -577,7 +577,7 @@ def parse_tim_file(filepath: str):
         offset += 1
     offset += 1  # Include null terminator
     quiz_title = data[title_start:offset-1].decode('latin-1')
-    print(f"Quiz Title: {quiz_title}")
+    print(f"Quiz Title: '{quiz_title}'")
     
     # Goal description (null-terminated string)
     desc_start = offset
@@ -585,7 +585,7 @@ def parse_tim_file(filepath: str):
         offset += 1
     offset += 1  # Include null terminator
     goal_description = data[desc_start:offset-1].decode('latin-1')
-    print(f"Goal Description: {goal_description}")
+    print(f"Goal Description: '{goal_description}'")
     
     # Hints (2 byte num + 8 * 7 bytes)
     num_hints = struct.unpack_from('<H', data, offset)[0]
@@ -597,56 +597,185 @@ def parse_tim_file(filepath: str):
     # Global puzzle information
     pressure, gravity, unk4, unk6, music, num_fixed, num_moving, unk14 = struct.unpack_from('<hhHHHHHH', data, offset)
     offset += 16
-    print(f"\nGlobal Puzzle Information:")
+    print(f"\n{'='*60}")
+    print(f"Global Puzzle Information:")
+    print(f"{'='*60}")
     print(f"  Pressure: {pressure}")
     print(f"  Gravity: {gravity}")
+    print(f"  Unknown_4: {unk4}")
+    print(f"  Unknown_6: {unk6}")
     print(f"  Music: {music}")
     print(f"  Fixed Parts: {num_fixed}")
     print(f"  Moving Parts: {num_moving}")
+    print(f"  Unknown_14: {unk14}")
+    
+    def get_part_type_name(part_type_val: int) -> str:
+        """Get human-readable part type name"""
+        try:
+            return PartType(part_type_val).name
+        except ValueError:
+            return f"UNKNOWN_{part_type_val}"
+    
+    def format_flags1(flags: int) -> list[str]:
+        """Format Flags1 into readable list"""
+        result = []
+        if flags & Flags1.UNKNOWN_0x40:
+            result.append("UNKNOWN_0x40")
+        if flags & Flags1.CAN_FLIP_VERTICAL:
+            result.append("CAN_FLIP_VERTICAL")
+        if flags & Flags1.CAN_FLIP_HORIZONTAL:
+            result.append("CAN_FLIP_HORIZONTAL")
+        if flags & Flags1.MOVING_PART:
+            result.append("MOVING_PART")
+        if flags & Flags1.FIXED_PART_1:
+            result.append("FIXED_PART_1")
+        if flags & Flags1.FIXED_PART_2:
+            result.append("FIXED_PART_2")
+        return result if result else ["NONE"]
+    
+    def format_flags2(flags: int) -> list[str]:
+        """Format Flags2 into readable list"""
+        result = []
+        if flags & Flags2.BELT_CAN_CONNECT:
+            result.append("BELT_CAN_CONNECT")
+        if flags & Flags2.BELT_IS_CONNECTED:
+            result.append("BELT_IS_CONNECTED")
+        if flags & Flags2.ROPE_CAN_CONNECT:
+            result.append("ROPE_CAN_CONNECT")
+        if flags & Flags2.ROPE_CAN_CONNECT_2:
+            result.append("ROPE_CAN_CONNECT_2")
+        if flags & Flags2.SPRITE_FLIP_HORIZONTAL:
+            result.append("SPRITE_FLIP_HORIZONTAL")
+        if flags & Flags2.SPRITE_FLIP_VERTICAL:
+            result.append("SPRITE_FLIP_VERTICAL")
+        if flags & Flags2.PROBABLY_UNUSED:
+            result.append("PROBABLY_UNUSED")
+        if flags & Flags2.CAN_STRETCH_ONE_DIR:
+            result.append("CAN_STRETCH_ONE_DIR")
+        if flags & Flags2.CAN_STRETCH_BOTH:
+            result.append("CAN_STRETCH_BOTH")
+        return result if result else ["NONE"]
+    
+    def format_flags3(flags: int) -> list[str]:
+        """Format Flags3 into readable list"""
+        result = []
+        if flags & Flags3.CAN_PLUG_OUTLET:
+            result.append("CAN_PLUG_OUTLET")
+        if flags & Flags3.IS_ELECTRIC_OUTLET:
+            result.append("IS_ELECTRIC_OUTLET")
+        if flags & Flags3.CAN_BURN_OR_FUSE:
+            result.append("CAN_BURN_OR_FUSE")
+        if flags & Flags3.UNKNOWN_0x8:
+            result.append("UNKNOWN_0x8")
+        if flags & Flags3.LOCKED:
+            result.append("LOCKED")
+        if flags & Flags3.SIZABLE_SCENERY:
+            result.append("SIZABLE_SCENERY")
+        if flags & Flags3.UNKNOWN_0x100:
+            result.append("UNKNOWN_0x100")
+        if flags & Flags3.SHOW_PROGRAM_ICON:
+            result.append("SHOW_PROGRAM_ICON")
+        if flags & Flags3.SCENERY_PART:
+            result.append("SCENERY_PART")
+        if flags & Flags3.WALL_PART:
+            result.append("WALL_PART")
+        if flags & Flags3.SHOW_SOLUTION_ICON:
+            result.append("SHOW_SOLUTION_ICON")
+        return result if result else ["NONE"]
     
     # Parse normal parts
-    print(f"\nNormal Parts ({num_moving}):")
+    print(f"\n{'='*60}")
+    print(f"Normal Parts ({num_moving}):")
+    print(f"{'='*60}")
     for i in range(num_moving):
-        part_data = struct.unpack_from('<HHHHHHHHHHhhHHBBHHBBHBBhhhh', data, offset)
+        part = Part.from_bytes(data, offset)
         offset += 48
-        part_type, flags1, flags2, flags3, appearance, unk10, w1, h1, w2, h2, x, y, behavior, unk26, \
-        belt_x, belt_y, belt_dist, unk32, rope1_x, rope1_y, unk36, rope2_x, rope2_y, \
-        conn1, conn2, outlet1, outlet2 = part_data
-        print(f"  Part {i}: Type={part_type}, Pos=({x},{y}), Size=({w1}x{h1})")
-        print(f"    Flags1=0x{flags1:04X}, Flags2=0x{flags2:04X}, Flags3=0x{flags3:04X}")
-        print(f"    Appearance={appearance}, Behavior={behavior}")
+        
+        print(f"\n  Part {i}: {get_part_type_name(part.part_type)}")
+        print(f"    Position: ({part.pos_x}, {part.pos_y})")
+        print(f"    Size 1: {part.width_1} x {part.height_1}")
+        print(f"    Size 2: {part.width_2} x {part.height_2}")
+        print(f"    Appearance: {part.appearance}")
+        print(f"    Behavior: {part.behavior}")
+        print(f"    Flags1 (0x{part.flags_1:04X}): {', '.join(format_flags1(part.flags_1))}")
+        print(f"    Flags2 (0x{part.flags_2:04X}): {', '.join(format_flags2(part.flags_2))}")
+        print(f"    Flags3 (0x{part.flags_3:04X}): {', '.join(format_flags3(part.flags_3))}")
+        
+        if part.belt_connect_pos_x != 0 or part.belt_connect_pos_y != 0:
+            print(f"    Belt Connect: ({part.belt_connect_pos_x}, {part.belt_connect_pos_y}), Distance: {part.belt_line_distance}")
+        if part.rope_1_connect_pos_x != 0 or part.rope_1_connect_pos_y != 0:
+            print(f"    Rope 1 Connect: ({part.rope_1_connect_pos_x}, {part.rope_1_connect_pos_y})")
+        if part.rope_2_connect_pos_x != 0 or part.rope_2_connect_pos_y != 0:
+            print(f"    Rope 2 Connect: ({part.rope_2_connect_pos_x}, {part.rope_2_connect_pos_y})")
+        if part.connected_1 != -1:
+            print(f"    Connected 1: {part.connected_1}")
+        if part.connected_2 != -1:
+            print(f"    Connected 2: {part.connected_2}")
+        if part.outlet_plugged_1 != -1:
+            print(f"    Outlet Plugged 1: {part.outlet_plugged_1}")
+        if part.outlet_plugged_2 != -1:
+            print(f"    Outlet Plugged 2: {part.outlet_plugged_2}")
+        if part.unknown_10 != 0:
+            print(f"    Unknown_10: {part.unknown_10}")
+        if part.unknown_26 != 0:
+            print(f"    Unknown_26: {part.unknown_26}")
+        if part.unknown_32 != 0:
+            print(f"    Unknown_32: {part.unknown_32}")
+        if part.unknown_36 != 0:
+            print(f"    Unknown_36: {part.unknown_36}")
     
     # Parse belts
-    print(f"\nBelts ({num_fixed if num_fixed > 0 else 0}):")
-    # Belts would be 52 bytes each, but we don't have any in current implementation
+    if num_fixed > 0:
+        print(f"\n{'='*60}")
+        print(f"Belts:")
+        print(f"{'='*60}")
+        # Belts would be 52 bytes each - need to determine how many
+        # For now, we'll try to detect them based on part type
     
     # Parse ropes
-    print(f"\nRopes:")
-    # Ropes would be 54 bytes each
+    print(f"\n{'='*60}")
+    print(f"Ropes:")
+    print(f"{'='*60}")
+    print("  (Not yet in generated files)")
     
     # Parse pulleys
-    print(f"\nPulleys:")
-    # Pulleys would be 56 bytes each
+    print(f"\n{'='*60}")
+    print(f"Pulleys:")
+    print(f"{'='*60}")
+    print("  (Not yet in generated files)")
     
     # Solution information (132 bytes)
+    print(f"\n{'='*60}")
+    print(f"Solution Information:")
+    print(f"{'='*60}")
     num_conditions = struct.unpack_from('<H', data, offset)[0]
     offset += 2
-    print(f"\nSolution Conditions: {num_conditions}")
+    print(f"Number of Conditions: {num_conditions}")
     for i in range(8):
         cond_data = struct.unpack_from('<hHHHhhhh', data, offset)
         offset += 16
         part_idx, state1, state2, count, rect_x, rect_y, rect_w, rect_h = cond_data
-        if part_idx != -1 or state1 != 0 or state2 != 0:
-            print(f"  Condition {i}: Part={part_idx}, State1={state1}, State2={state2}, Count={count}, Rect=({rect_x},{rect_y},{rect_w},{rect_h})")
+        if part_idx != -1 or state1 != 0 or state2 != 0 or count != 0:
+            print(f"\n  Condition {i}:")
+            print(f"    Part Index: {part_idx}")
+            print(f"    State 1: {state1}")
+            print(f"    State 2: {state2}")
+            print(f"    Count: {count}")
+            print(f"    Rectangle: ({rect_x}, {rect_y}) {rect_w}x{rect_h}")
     
     delay = struct.unpack_from('<H', data, offset)[0]
     offset += 2
-    print(f"Delay: {delay}")
+    print(f"\nDelay: {delay}")
     
-    print(f"\nTotal file size: {len(data)} bytes")
+    print(f"\n{'='*60}")
+    print(f"File Statistics:")
+    print(f"{'='*60}")
+    print(f"Total file size: {len(data)} bytes")
     print(f"Bytes parsed: {offset}")
     if offset != len(data):
         print(f"Warning: {len(data) - offset} bytes remaining!")
+    else:
+        print("File parsed successfully!")
 
 
 def main():
