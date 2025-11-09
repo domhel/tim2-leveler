@@ -1,0 +1,1 @@
+This project is based on the great reverse engineering work documented at https://moddingwiki.shikadi.net/wiki/The_Incredible_Machine_Level_Format
