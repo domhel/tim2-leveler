@@ -1784,40 +1784,90 @@ def main():
     # If tim2json mode, convert TIM to JSON and exit
     if args.tim2json:
         input_path = Path(args.tim2json)
-        if args.output:
-            output_path = Path(args.output)
+        
+        # Check if input is a directory
+        if input_path.is_dir():
+            # Process all .TIM files in directory
+            output_dir = Path(args.output) if args.output else input_path
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            tim_files = list(input_path.glob('*.TIM')) + list(input_path.glob('*.tim'))
+            if not tim_files:
+                print(f"No TIM files found in {input_path}")
+                return
+            
+            print(f"Converting {len(tim_files)} TIM file(s) from {input_path}...")
+            for tim_file in tim_files:
+                output_file = output_dir / tim_file.with_suffix('.json').name
+                print(f"  {tim_file.name} -> {output_file.name}")
+                json_data = tim_to_json(str(tim_file))
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, indent=2, ensure_ascii=False)
+            
+            print(f"Saved {len(tim_files)} JSON file(s) to {output_dir}")
+            return
         else:
-            output_path = input_path.with_suffix('.json')
-        
-        print(f"Converting {input_path} to JSON...")
-        json_data = tim_to_json(str(input_path))
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, indent=2, ensure_ascii=False)
-        
-        print(f"Saved to {output_path}")
-        return
+            # Process single file
+            if args.output:
+                output_path = Path(args.output)
+            else:
+                output_path = input_path.with_suffix('.json')
+            
+            print(f"Converting {input_path} to JSON...")
+            json_data = tim_to_json(str(input_path))
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, indent=2, ensure_ascii=False)
+            
+            print(f"Saved to {output_path}")
+            return
     
     # If json2tim mode, convert JSON to TIM and exit
     if args.json2tim:
         input_path = Path(args.json2tim)
-        if args.output:
-            output_path = Path(args.output)
+        
+        # Check if input is a directory
+        if input_path.is_dir():
+            # Process all .json files in directory
+            output_dir = Path(args.output) if args.output else input_path
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            json_files = list(input_path.glob('*.json'))
+            if not json_files:
+                print(f"No JSON files found in {input_path}")
+                return
+            
+            print(f"Converting {len(json_files)} JSON file(s) from {input_path}...")
+            for json_file in json_files:
+                output_file = output_dir / json_file.with_suffix('.TIM').name
+                print(f"  {json_file.name} -> {output_file.name}")
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    json_data = json.load(f)
+                tim_bytes = json_to_tim(json_data)
+                with open(output_file, 'wb') as f:
+                    f.write(tim_bytes)
+            
+            print(f"Saved {len(json_files)} TIM file(s) to {output_dir}")
+            return
         else:
-            output_path = input_path.with_suffix('.TIM')
-        
-        print(f"Converting {input_path} to TIM...")
-        
-        with open(input_path, 'r', encoding='utf-8') as f:
-            json_data = json.load(f)
-        
-        tim_bytes = json_to_tim(json_data)
-        
-        with open(output_path, 'wb') as f:
-            f.write(tim_bytes)
-        
-        print(f"Saved {len(tim_bytes)} bytes to {output_path}")
-        return
+            # Process single file
+            if args.output:
+                output_path = Path(args.output)
+            else:
+                output_path = input_path.with_suffix('.TIM')
+            
+            print(f"Converting {input_path} to TIM...")
+            
+            with open(input_path, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+            
+            tim_bytes = json_to_tim(json_data)
+            
+            with open(output_path, 'wb') as f:
+                f.write(tim_bytes)
+            
+            print(f"Saved {len(tim_bytes)} bytes to {output_path}")
+            return
     
     # If parse mode, parse the file and exit
     if args.parse:
