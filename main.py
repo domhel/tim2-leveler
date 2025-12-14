@@ -28,32 +28,32 @@ class PartType(IntEnum):
     BIKE_PUMP = 16
     BUCKET = 17
     CANNON = 18
-    UNKNOWN_19 = 19
+    DYNAMITE = 19
     UNKNOWN_20 = 20
     UNKNOWN_21 = 21
     UNKNOWN_22 = 22
     UNKNOWN_23 = 23
     UNKNOWN_24 = 24
-    UNKNOWN_25 = 25
+    FLASHLIGHT = 25
     UNKNOWN_26 = 26
     UNKNOWN_27 = 27
-    UNKNOWN_28 = 28
+    BASEBALL = 28
     UNKNOWN_29 = 29
-    UNKNOWN_30 = 30
-    UNKNOWN_31 = 31
+    MAGNIFYING_GLASS = 30
+    MANDRILL_MOTOR = 31
     UNKNOWN_32 = 32
     UNKNOWN_33 = 33
     UNKNOWN_34 = 34
-    UNKNOWN_35 = 35
+    BOXING_GLOVE = 35
     UNKNOWN_36 = 36
     UNKNOWN_37 = 37
     UNKNOWN_38 = 38
     UNKNOWN_39 = 39
     UNKNOWN_40 = 40
     UNKNOWN_41 = 41
-    UNKNOWN_42 = 42
-    UNKNOWN_43 = 43
-    UNKNOWN_44 = 44
+    NEWTON_MOUSE = 42
+    PINBALL = 43
+    TENNIS_BALL = 44
     UNKNOWN_45 = 45
     PIPE_WALL = 46
     CURVED_PIPE_WALL = 47
@@ -77,9 +77,9 @@ class PartType(IntEnum):
     UNKNOWN_65 = 65
     UNKNOWN_66 = 66
     UNKNOWN_67 = 67
-    UNKNOWN_68 = 68
-    UNKNOWN_69 = 69
-    UNKNOWN_70 = 70
+    SOCCER_BALL = 68
+    ANTI_GRAVITY_PAD = 69
+    MISSILE = 70
     UNKNOWN_71 = 71
     UNKNOWN_72 = 72
     UNKNOWN_73 = 73
@@ -90,7 +90,7 @@ class PartType(IntEnum):
     UNKNOWN_78 = 78
     UNKNOWN_79 = 79
     UNKNOWN_80 = 80
-    UNKNOWN_81 = 81
+    TOASTER = 81
     UNKNOWN_82 = 82
     UNKNOWN_83 = 83
     UNKNOWN_84 = 84
@@ -145,10 +145,10 @@ class PartType(IntEnum):
     UNKNOWN_133 = 133
     UNKNOWN_134 = 134
     UNKNOWN_135 = 135
-    UNKNOWN_136 = 136
+    MESSAGE_COMPUTER = 136
     UNKNOWN_137 = 137
-    UNKNOWN_138 = 138
-    UNKNOWN_139 = 139
+    CANDLE = 138
+    TEETER_TOTTER = 139
     UNKNOWN_140 = 140
     UNKNOWN_141 = 141
     UNKNOWN_142 = 142
@@ -157,7 +157,7 @@ class PartType(IntEnum):
     UNKNOWN_145 = 145
     UNKNOWN_146 = 146
     UNKNOWN_147 = 147
-    UNKNOWN_148 = 148
+    LASER_DETECTOR = 148
     UNKNOWN_149 = 149
     UNKNOWN_150 = 150
     EMPTY_SLOT = 65535  # 0xFFFF - likely an empty or placeholder slot
@@ -223,27 +223,27 @@ def get_default_part_flags(part_type: PartType) -> tuple[int, int, int]:
         16: (0x6400, 0x0000, 0x8008),  # BIKE_PUMP
         17: (0x1000, 0x0004, 0x8008),  # BUCKET
         18: (0x6600, 0x0000, 0x800c),  # CANNON
-        19: (0x1400, 0x0000, 0x800c),  # UNKNOWN_19
+        19: (0x1400, 0x0000, 0x800c),  # DYNAMITE
         21: (0x6200, 0x0000, 0x0002),  # UNKNOWN_21
         22: (0x6000, 0x0004, 0x8008),  # UNKNOWN_22
         23: (0x6200, 0x0004, 0x0008),  # UNKNOWN_23
         24: (0x6400, 0x0000, 0x8009),  # UNKNOWN_24
-        25: (0x6400, 0x0000, 0x8008),  # UNKNOWN_25
+        25: (0x6400, 0x0000, 0x8008),  # FLASHLIGHT
         26: (0x6000, 0x0001, 0x000a),  # UNKNOWN_26
         27: (0x6400, 0x0004, 0x8408),  # UNKNOWN_27
-        28: (0x1000, 0x0000, 0x8008),  # UNKNOWN_28
+        28: (0x1000, 0x0000, 0x8008),  # BASEBALL
         29: (0x6000, 0x0004, 0x8008),  # UNKNOWN_29
-        30: (0x6400, 0x0000, 0x0008),  # UNKNOWN_30
-        31: (0x6400, 0x0005, 0x8008),  # UNKNOWN_31
-        35: (0x6400, 0x0000, 0x8008),  # UNKNOWN_35
+        30: (0x6400, 0x0000, 0x0008),  # MAGNIFYING_GLASS
+        31: (0x6400, 0x0005, 0x8008),  # MANDRILL_MOTOR
+        35: (0x6400, 0x0000, 0x8008),  # BOXING_GLOVE
         36: (0x1600, 0x0000, 0x800c),  # UNKNOWN_36
         37: (0x6400, 0x0000, 0x8008),  # UNKNOWN_37
         38: (0x6000, 0x0000, 0x000a),  # UNKNOWN_38
         39: (0x6000, 0x0000, 0x0008),  # UNKNOWN_39
         40: (0x6400, 0x0001, 0x8008),  # UNKNOWN_40
-        42: (0x1400, 0x0000, 0x8008),  # UNKNOWN_42
-        43: (0x1000, 0x0000, 0x8008),  # UNKNOWN_43
-        44: (0x1000, 0x0000, 0x8008),  # UNKNOWN_44
+        42: (0x1400, 0x0000, 0x8008),  # NEWTON_MOUSE
+        43: (0x1000, 0x0000, 0x8008),  # PINBALL
+        44: (0x1000, 0x0000, 0x8008),  # TENNIS_BALL
         45: (0x1400, 0x0000, 0x800c),  # UNKNOWN_45
         46: (0x6000, 0x0180, 0x2000),  # PIPE_WALL
         47: (0x6600, 0x0000, 0x0000),  # CURVED_PIPE_WALL
@@ -265,9 +265,9 @@ def get_default_part_flags(part_type: PartType) -> tuple[int, int, int]:
         64: (0x6000, 0x0000, 0x0008),  # PINBALL_BUMPER
         66: (0x6000, 0x0000, 0x8008),  # UNKNOWN_66
         67: (0x6000, 0x0000, 0x8009),  # UNKNOWN_67
-        68: (0x1000, 0x0000, 0x8008),  # UNKNOWN_68
-        69: (0x6000, 0x0000, 0x8000),  # UNKNOWN_69
-        70: (0x1600, 0x0000, 0x800c),  # UNKNOWN_70
+        68: (0x1000, 0x0000, 0x8008),  # SOCCER_BALL
+        69: (0x6000, 0x0000, 0x8000),  # ANTI_GRAVITY_PAD
+        70: (0x1600, 0x0000, 0x800c),  # MISSILE
         71: (0x6000, 0x0000, 0x0400),  # UNKNOWN_71
         73: (0x6400, 0x0000, 0x8000),  # UNKNOWN_73
         74: (0x1000, 0x0000, 0x8008),  # UNKNOWN_74
@@ -276,7 +276,7 @@ def get_default_part_flags(part_type: PartType) -> tuple[int, int, int]:
         78: (0x6000, 0x0000, 0x8008),  # UNKNOWN_78
         79: (0x1000, 0x0004, 0x800c),  # UNKNOWN_79
         80: (0x1000, 0x0000, 0x840c),  # UNKNOWN_80
-        81: (0x6400, 0x0000, 0x8409),  # UNKNOWN_81
+        81: (0x6400, 0x0000, 0x8409),  # TOASTER
         82: (0x6000, 0x0180, 0x2000),  # UNKNOWN_82
         83: (0x6000, 0x0180, 0x2000),  # UNKNOWN_83
         84: (0x6000, 0x0180, 0x2000),  # UNKNOWN_84
@@ -312,11 +312,11 @@ def get_default_part_flags(part_type: PartType) -> tuple[int, int, int]:
         120: (0x6000, 0x0000, 0x000a),  # UNKNOWN_120
         125: (0x6000, 0x0180, 0x2000),  # UNKNOWN_125
         126: (0x6600, 0x0080, 0x0000),  # UNKNOWN_126
-        136: (0x6000, 0x0000, 0x8408),  # UNKNOWN_136
+        136: (0x6000, 0x0000, 0x8408),  # MESSAGE_COMPUTER
         137: (0x6400, 0x0000, 0x8408),  # UNKNOWN_137
-        138: (0x1000, 0x0000, 0x800c),  # UNKNOWN_138
-        139: (0x6400, 0x000c, 0x0000),  # UNKNOWN_139
-        148: (0x6000, 0x0000, 0x8008),  # UNKNOWN_148
+        138: (0x1000, 0x0000, 0x800c),  # CANDLE
+        139: (0x6400, 0x000c, 0x0000),  # TEETER_TOTTER
+        148: (0x6000, 0x0000, 0x8008),  # LASER_DETECTOR
     }
     
     # Default flags for unknown parts: fixed, no special flags
@@ -542,14 +542,14 @@ def parse_part_from_bytes(data: bytes, offset: int) -> tuple[Part, int]:
         extra = struct.unpack_from('<HHhhhhhh', data, offset + 48)
         return Belt(
             **base.__dict__,
-            unknown_28=extra[0],
+            BASEBALL=extra[0],
             unknown_30=extra[1],
             belt_connected_part_1=extra[2],
             belt_connected_part_2=extra[3],
             unknown_36_belt=extra[4],
             unknown_38=extra[5],
             unknown_40=extra[6],
-            unknown_42=extra[7],
+            NEWTON_MOUSE=extra[7],
         ), 52
     elif part_type_value == PartType.ROPE:
         # Parse as Rope (54 bytes)
@@ -558,14 +558,14 @@ def parse_part_from_bytes(data: bytes, offset: int) -> tuple[Part, int]:
         return Rope(
             **base.__dict__,
             rope_segment_length=extra[0],
-            unknown_28=extra[1],
+            BASEBALL=extra[1],
             unknown_30=extra[2],
             unknown_32_rope=extra[3],
             rope_connected_part_1=extra[4],
             rope_connected_part_2=extra[5],
             part_1_connect_field_usage=extra[6],
             part_2_connect_field_usage=extra[7],
-            unknown_44=extra[8],
+            TENNIS_BALL=extra[8],
             unknown_46=extra[9],
         ), 54
     elif part_type_value == PartType.PULLEY:
@@ -574,7 +574,7 @@ def parse_part_from_bytes(data: bytes, offset: int) -> tuple[Part, int]:
         extra = struct.unpack_from('<HHHh', data, offset + 48)
         return Pulley(
             **base.__dict__,
-            unknown_28=extra[0],
+            BASEBALL=extra[0],
             unknown_30=extra[1],
             unknown_32_pulley=extra[2],
             rope_index=extra[3],
@@ -600,14 +600,14 @@ def parse_part_from_bytes(data: bytes, offset: int) -> tuple[Part, int]:
 @dataclass
 class Belt(Part):
     """Belt part (52 bytes)"""
-    unknown_28: int = 0
+    BASEBALL: int = 0
     unknown_30: int = 0
     belt_connected_part_1: int = -1
     belt_connected_part_2: int = -1
     unknown_36_belt: int = 0
     unknown_38: int = 0
     unknown_40: int = 0
-    unknown_42: int = 0
+    NEWTON_MOUSE: int = 0
 
     def to_bytes(self) -> bytes:
         """Pack the belt data into 52 bytes"""
@@ -618,9 +618,9 @@ class Belt(Part):
             self.width_1, self.height_1, self.width_2, self.height_2,
             self.pos_x, self.pos_y,
             self.behavior, self.unknown_26,
-            self.unknown_28, self.unknown_30,
+            self.BASEBALL, self.unknown_30,
             self.belt_connected_part_1, self.belt_connected_part_2,
-            self.unknown_36_belt, self.unknown_38, self.unknown_40, self.unknown_42
+            self.unknown_36_belt, self.unknown_38, self.unknown_40, self.NEWTON_MOUSE
         )
         # Add the standard ending fields
         ending = struct.pack('<hhhh', 
@@ -634,14 +634,14 @@ class Belt(Part):
 class Rope(Part):
     """Rope part (54 bytes)"""
     rope_segment_length: int = 0
-    unknown_28: int = 0
+    BASEBALL: int = 0
     unknown_30: int = 0
     unknown_32_rope: int = 1
     rope_connected_part_1: int = -1
     rope_connected_part_2: int = -1
     part_1_connect_field_usage: int = 0
     part_2_connect_field_usage: int = 0
-    unknown_44: int = 0
+    TENNIS_BALL: int = 0
     unknown_46: int = 0
 
     def to_bytes(self) -> bytes:
@@ -665,7 +665,7 @@ class Rope(Part):
         # Extra 6 bytes specific to Rope: 3 H values
         extra = struct.pack('<HHH',
             self.rope_segment_length,
-            self.unknown_28,
+            self.BASEBALL,
             self.unknown_30
         )
         return base + extra
@@ -674,7 +674,7 @@ class Rope(Part):
 @dataclass
 class Pulley(Part):
     """Pulley part (56 bytes: 48 base + 8 extra)"""
-    unknown_28: int = 0
+    BASEBALL: int = 0
     unknown_30: int = 0
     unknown_32_pulley: int = 1
     rope_index: int = -1
@@ -699,7 +699,7 @@ class Pulley(Part):
         )
         # Extra 8 bytes specific to Pulley: 4 H values
         extra = struct.pack('<HHHh',
-            self.unknown_28,
+            self.BASEBALL,
             self.unknown_30,
             self.unknown_32_pulley,
             self.rope_index
@@ -1049,7 +1049,13 @@ def part_to_dict(part: Part) -> dict:
     """Convert a Part object to a JSON-serializable dictionary"""
     result = {
         "part_type": part.part_type.name,
-        "position": {"x": part.pos_x, "y": part.pos_y}
+        "position": {"x": part.pos_x, "y": part.pos_y},
+        "size": {
+            "width_1": part.width_1,
+            "height_1": part.height_1,
+            "width_2": part.width_2,
+            "height_2": part.height_2
+        }
     }
     
     # Only include flags if they differ from defaults
@@ -1060,17 +1066,6 @@ def part_to_dict(part: Part) -> dict:
         result["flags_2"] = flags2_to_list(part.flags_2)
     if part.flags_3 != default_f3:
         result["flags_3"] = flags3_to_list(part.flags_3)
-    
-    # Only include size if it differs from default
-    default_w1, default_h1, default_w2, default_h2 = get_default_part_size(part.part_type)
-    if (part.width_1 != default_w1 or part.height_1 != default_h1 or 
-        part.width_2 != default_w2 or part.height_2 != default_h2):
-        result["size"] = {
-            "width_1": part.width_1,
-            "height_1": part.height_1,
-            "width_2": part.width_2,
-            "height_2": part.height_2
-        }
     
     # Add optional fields only if non-default (skip unknown_* fields that are 0)
     if part.appearance != 0:
@@ -1115,8 +1110,8 @@ def part_to_dict(part: Part) -> dict:
     # Type-specific fields
     if isinstance(part, Belt):
         belt_data = {}
-        if part.unknown_28 != 0:
-            belt_data["unknown_28"] = part.unknown_28
+        if part.BASEBALL != 0:
+            belt_data["BASEBALL"] = part.BASEBALL
         if part.unknown_30 != 0:
             belt_data["unknown_30"] = part.unknown_30
         if part.belt_connected_part_1 != -1:
@@ -1129,16 +1124,16 @@ def part_to_dict(part: Part) -> dict:
             belt_data["unknown_38"] = part.unknown_38
         if part.unknown_40 != 0:
             belt_data["unknown_40"] = part.unknown_40
-        if part.unknown_42 != 0:
-            belt_data["unknown_42"] = part.unknown_42
+        if part.NEWTON_MOUSE != 0:
+            belt_data["NEWTON_MOUSE"] = part.NEWTON_MOUSE
         if belt_data:  # Only add if there's data
             result["belt_data"] = belt_data
     elif isinstance(part, Rope):
         rope_data = {}
         if part.rope_segment_length != 0:
             rope_data["segment_length"] = part.rope_segment_length
-        if part.unknown_28 != 0:
-            rope_data["unknown_28"] = part.unknown_28
+        if part.BASEBALL != 0:
+            rope_data["BASEBALL"] = part.BASEBALL
         if part.unknown_30 != 0:
             rope_data["unknown_30"] = part.unknown_30
         if part.unknown_32_rope != 1:  # Default is 1, not 0
@@ -1151,16 +1146,16 @@ def part_to_dict(part: Part) -> dict:
             rope_data["part_1_connect_field_usage"] = part.part_1_connect_field_usage
         if part.part_2_connect_field_usage != 0:
             rope_data["part_2_connect_field_usage"] = part.part_2_connect_field_usage
-        if part.unknown_44 != 0:
-            rope_data["unknown_44"] = part.unknown_44
+        if part.TENNIS_BALL != 0:
+            rope_data["TENNIS_BALL"] = part.TENNIS_BALL
         if part.unknown_46 != 0:
             rope_data["unknown_46"] = part.unknown_46
         if rope_data:  # Only add if there's data
             result["rope_data"] = rope_data
     elif isinstance(part, Pulley):
         pulley_data: dict[str, object] = {}
-        if part.unknown_28 != 0:
-            pulley_data["unknown_28"] = part.unknown_28
+        if part.BASEBALL != 0:
+            pulley_data["BASEBALL"] = part.BASEBALL
         if part.unknown_30 != 0:
             pulley_data["unknown_30"] = part.unknown_30
         if part.unknown_32_pulley != 1:  # Default is 1, not 0
@@ -1266,35 +1261,35 @@ def dict_to_part(part_dict: dict) -> Part:
     if "belt_data" in part_dict:
         bd = part_dict["belt_data"]
         kwargs.update({
-            "unknown_28": bd.get("unknown_28", 0),
+            "BASEBALL": bd.get("BASEBALL", 0),
             "unknown_30": bd.get("unknown_30", 0),
             "belt_connected_part_1": bd.get("connected_part_1", -1),
             "belt_connected_part_2": bd.get("connected_part_2", -1),
             "unknown_36_belt": bd.get("unknown_36", 0),
             "unknown_38": bd.get("unknown_38", 0),
             "unknown_40": bd.get("unknown_40", 0),
-            "unknown_42": bd.get("unknown_42", 0)
+            "NEWTON_MOUSE": bd.get("NEWTON_MOUSE", 0)
         })
         return Belt(**kwargs)
     elif "rope_data" in part_dict:
         rd = part_dict["rope_data"]
         kwargs.update({
             "rope_segment_length": rd.get("segment_length", 0),
-            "unknown_28": rd.get("unknown_28", 0),
+            "BASEBALL": rd.get("BASEBALL", 0),
             "unknown_30": rd.get("unknown_30", 0),
             "unknown_32_rope": rd.get("unknown_32", 1),
             "rope_connected_part_1": rd.get("connected_part_1", -1),
             "rope_connected_part_2": rd.get("connected_part_2", -1),
             "part_1_connect_field_usage": rd.get("part_1_connect_field_usage", 0),
             "part_2_connect_field_usage": rd.get("part_2_connect_field_usage", 0),
-            "unknown_44": rd.get("unknown_44", 0),
+            "TENNIS_BALL": rd.get("TENNIS_BALL", 0),
             "unknown_46": rd.get("unknown_46", 0)
         })
         return Rope(**kwargs)
     elif "pulley_data" in part_dict:
         pd = part_dict["pulley_data"]
         kwargs.update({
-            "unknown_28": pd.get("unknown_28", 0),
+            "BASEBALL": pd.get("BASEBALL", 0),
             "unknown_30": pd.get("unknown_30", 0),
             "unknown_32_pulley": pd.get("unknown_32", 1),
             "rope_index": pd.get("rope_index", -1)
@@ -1696,8 +1691,8 @@ def parse_tim_file(filepath: str):
         
         # Type-specific fields
         if isinstance(part, Belt):
-            if part.unknown_28 != 0:
-                print(f"    Belt Unknown_28: {part.unknown_28}")
+            if part.BASEBALL != 0:
+                print(f"    Belt BASEBALL: {part.BASEBALL}")
             if part.unknown_30 != 0:
                 print(f"    Belt Unknown_30: {part.unknown_30}")
             if part.belt_connected_part_1 != -1:
@@ -1712,7 +1707,7 @@ def parse_tim_file(filepath: str):
             if part.rope_connected_part_2 != -1:
                 print(f"    Rope Connected Part 2: {part.rope_connected_part_2}")
         elif isinstance(part, Pulley):
-            print(f"    Pulley unknown_28: {part.unknown_28}")
+            print(f"    Pulley BASEBALL: {part.BASEBALL}")
             print(f"    Pulley unknown_30: {part.unknown_30}")
             print(f"    Pulley unknown_32: {part.unknown_32_pulley}")
             if part.rope_index != -1:
